@@ -20,23 +20,20 @@ FROM rust:1.75-alpine AS backend-builder
 
 WORKDIR /app
 
-# 安装构建依赖（包括 PostgreSQL 客户端库和 OpenSSL）
+# 安装构建依赖（包括 PostgreSQL 客户端库、OpenSSL 和 pkg-config）
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev postgresql-dev
 
 # 复制 Cargo 配置文件
 COPY backend/Cargo.toml ./
 
-# 生成 Cargo.lock（单独步骤，便于缓存）
-RUN cargo generate-lockfile || exit 1
-
 # 复制源代码
 COPY backend/src ./src
 
-# 下载依赖
-RUN cargo fetch
-
-# 编译
+# 生成 Cargo.lock 并下载依赖（合并步骤，避免缓存失效）
+# 注意：cargo 会自动生成 Cargo.lock 如果不存在
 RUN cargo build --release
+
+# 编译产物已在 target/release/notion-drive
 
 # ==================== 阶段 3: 运行 ====================
 FROM alpine:3.19
