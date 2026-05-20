@@ -1,0 +1,79 @@
+[package]
+name = "notion-drive-backend"
+version = "0.2.0"
+edition = "2021"
+authors = ["Notion Drive Team"]
+description = "A modern cloud drive service built with Rust"
+
+[dependencies]
+# Web framework
+axum = { version = "0.7", features = ["macros", "multipart"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "set-header"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "uuid", "chrono", "json", "ipnetwork"] }
+
+# Authentication & Security
+jsonwebtoken = "9"
+argon2 = "0.5"
+rand = "0.8"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Date & Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Logging & Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration
+config = "0.14"
+dotenvy = "0.15"
+
+# File handling
+tokio-stream = "0.1"
+futures = "0.3"
+sha2 = "0.10"
+hex = "0.4"
+mime = "0.3"
+
+# HTTP Client
+reqwest = { version = "0.11", features = ["json", "multipart"] }
+
+# AWS S3 SDK (for S3-compatible storage)
+aws-sdk-s3 = "1"
+aws-config = "1"
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
+# Rate limiting
+governor = "0.6"
+
+# IP network
+ipnetwork = "0.20"
+
+# URL encoding
+urlencoding = "2.1"
+url = { version = "2.5", features = ["serde"] }
+
+# Base64 encoding
+base64 = "0.21"
+
+# XML parsing (for WebDAV)
+quick-xml = { version = "0.31", features = ["serialize"] }
+
+[dev-dependencies]
+tokio-test = "0.4"

@@ -1,0 +1,236 @@
+name: Docker Build & Publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/notion-drive
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    needs: [lint]
+    if: always() && (needs.lint.result == 'success' || needs.lint.result == 'skipped')
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - run: |
+          echo "${{ matrix.platform }}: ${{ steps.build.outputs.digest }}"
+
+      - uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+        continue-on-error: true
+
+  manifest:
+    name: Manifest
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - run: |
+          for TAG in $(echo "${{ steps.meta.outputs.tags }}" | tr '\n' ' '); do
+            [[ "$TAG" == *"pr"* ]] && continue
+            docker manifest create --amend "$TAG" "${TAG}-amd64" "${TAG}-arm64" 2>/dev/null || true
+            docker manifest push --purge "$TAG" 2>/dev/null || true
+          done
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+
+  generate-compose:
+    name: Generate compose
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - run: |
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/notion-drive:${{ steps.tag.outputs.tag }}"
+          cat > docker-compose.prod.yml << EOF
+          version: '3.8'
+          services:
+            postgres:
+              image: postgres:16-alpine
+              restart: unless-stopped
+              environment:
+                POSTGRES_USER: \${DB_USER:-notion_drive}
+                POSTGRES_PASSWORD: \${DB_PASSWORD:-notion_drive_secret}
+                POSTGRES_DB: \${DB_NAME:-notion_drive}
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+                - ./docker/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U \${DB_USER:-notion_drive} -d \${DB_NAME:-notion_drive}"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+            notion-drive:
+              image: ${IMAGE}
+              restart: unless-stopped
+              environment:
+                DATABASE_URL: postgres://\${DB_USER:-notion_drive}:\${DB_PASSWORD:-notion_drive_secret}@postgres:5432/\${DB_NAME:-notion_drive}
+                JWT_SECRET: \${JWT_SECRET}
+              volumes:
+                - backend_storage:/app/storage
+              depends_on:
+                postgres:
+                  condition: service_healthy
+          volumes:
+            postgres_data:
+            backend_storage:
+          EOF
+          echo "Generated docker-compose.prod.yml"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-compose-prod
+          path: docker-compose.prod.yml
+          retention-days: 90
+
+      - run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docker-compose.prod.yml
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: update compose [skip ci]"
+          git push
+
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [build, manifest]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: notion-drive
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [build, generate-compose]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: docker-compose-prod
+          path: .
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: docker-compose.prod.yml
+          generate_release_notes: true

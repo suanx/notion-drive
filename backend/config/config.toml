@@ -1,0 +1,33 @@
+[database]
+url = "postgres://notion_drive:notion_drive_secret@localhost:5432/notion_drive"
+pool_size = 10
+
+[jwt]
+secret = "your_jwt_secret_key_change_in_production"
+expiration_hours = 24
+
+[storage]
+default_policy_id = "00000000-0000-0000-0000-000000000001"
+local_path = "./storage"
+
+[minio]
+endpoint = "localhost:9000"
+access_key = "minio_admin"
+secret_key = "minio_admin_secret"
+bucket = "notion-drive"
+use_ssl = false
+
+[server]
+host = "0.0.0.0"
+port = 8080
+base_url = "http://localhost:8080"
+
+[cors]
+allowed_origins = ["http://localhost:3000", "http://localhost:8080"]
+allowed_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+allowed_headers = ["Authorization", "Content-Type", "X-Requested-With"]
+
+[rate_limit]
+requests_per_minute = 100
+upload_bandwidth_mbps = 50
+download_bandwidth_mbps = 100

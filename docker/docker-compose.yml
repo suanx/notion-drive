@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: notion-drive-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-notion_drive}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-notion_drive_secret}
+      POSTGRES_DB: ${DB_NAME:-notion_drive}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-notion_drive} -d ${DB_NAME:-notion_drive}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - notion-drive-network
+    restart: unless-stopped
+
+  # 后端 + 前端 合并服务
+  notion-drive:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: notion-drive
+    environment:
+      RUST_LOG: ${RUST_LOG:-info}
+      DATABASE_URL: postgres://${DB_USER:-notion_drive}:${DB_PASSWORD:-notion_drive_secret}@postgres:5432/${DB_NAME:-notion_drive}
+      JWT_SECRET: ${JWT_SECRET}
+      NOTION__SERVER__BASE_URL: ${NOTION_SERVER_BASE_URL:-http://localhost:8080}
+      NOTION__CORS__ALLOWED_ORIGINS: ${NOTION_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      STORAGE_DIR: /app/storage
+      # S3 兼容存储配置（可选）
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-notion-drive}
+    volumes:
+      - backend_storage:/app/storage
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - notion-drive-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  backend_storage:
+
+networks:
+  notion-drive-network:
+    driver: bridge

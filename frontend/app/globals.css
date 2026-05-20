@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 245, 247, 250;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 17, 24, 39;
+    --background-end-rgb: 31, 41, 55;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 文件图标颜色 */
+.file-icon {
+  @apply w-6 h-6;
+}
+
+.file-icon-folder {
+  @apply text-yellow-500;
+}
+
+.file-icon-image {
+  @apply text-blue-500;
+}
+
+.file-icon-document {
+  @apply text-green-500;
+}
+
+.file-icon-video {
+  @apply text-red-500;
+}
+
+.file-icon-audio {
+  @apply text-purple-500;
+}
+
+.file-icon-archive {
+  @apply text-orange-500;
+}
+
+.file-icon-other {
+  @apply text-gray-500;
+}
+
+/* 按钮样式 */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-all;
+}
+
+.btn-danger {
+  @apply px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all;
+}
+
+/* 输入框样式 */
+.input-base {
+  @apply px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+}
+
+/* 卡片样式 */
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200;
+}
+
+/* 表格行样式 */
+.table-row {
+  @apply px-4 py-3 flex items-center hover:bg-gray-50 group cursor-pointer;
+}
+
+/* 侧边栏链接样式 */
+.sidebar-link {
+  @apply w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all;
+}
+
+.sidebar-link-active {
+  @apply bg-blue-50 text-blue-600;
+}
+
+.sidebar-link-inactive {
+  @apply text-gray-600 hover:bg-gray-100;
+}
+
+/* 配额进度条 */
+.quota-bar {
+  @apply w-full bg-gray-200 rounded-full h-1.5;
+}
+
+.quota-fill {
+  @apply bg-blue-600 h-1.5 rounded-full transition-all duration-300;
+}
+
+/* 加载动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* 模态框遮罩 */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+/* 下拉菜单样式 */
+.dropdown-menu {
+  @apply absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50;
+}
+
+.dropdown-item {
+  @apply px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2;
+}
+
+/* 通知样式 */
+.toast-success {
+  @apply bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg;
+}
+
+.toast-error {
+  @apply bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg;
+}
+
+.toast-info {
+  @apply bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg;
+}
