@@ -23,17 +23,16 @@ WORKDIR /app
 # 安装构建依赖
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev
 
-# 复制 Cargo 配置文件（Cargo.lock 确保依赖版本一致）
+# 复制 Cargo 配置文件
 COPY backend/Cargo.toml ./
-COPY backend/Cargo.lock ./
 
-# 预下载依赖（利用 Docker 缓存层）
-RUN cargo fetch
-
-# 复制源代码
+# 复制源代码（在 fetch 之前复制，利用 Docker 缓存）
 COPY backend/src ./src
 
-# 编译
+# 生成 Cargo.lock 并下载依赖（合并步骤，避免缓存失效）
+RUN cargo generate-lockfile && cargo fetch
+
+# 编译（利用缓存层）
 RUN cargo build --release
 
 # ==================== 阶段 3: 运行 ====================

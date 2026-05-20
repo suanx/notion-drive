@@ -9,7 +9,7 @@ echo.
 
 REM 检查必要文件
 echo 📋 检查必要文件...
-set FILES=backend\Cargo.toml backend\Cargo.lock backend\Dockerfile frontend\package.json frontend\package-lock.json docker\docker-compose.yml
+set FILES=backend\Cargo.toml backend\Dockerfile frontend\package.json frontend\package-lock.json docker\docker-compose.yml
 
 for %%F in (%FILES%) do (
     if exist "%%F" (
@@ -18,6 +18,13 @@ for %%F in (%FILES%) do (
         echo   ❌ %%F (缺失)
         exit /b 1
     )
+)
+
+REM Cargo.lock 可选
+if exist "backend\Cargo.lock" (
+    echo   ✅ backend\Cargo.lock (已提交)
+) else (
+    echo   ⚠️  backend\Cargo.lock (未提交，构建时生成)
 )
 
 echo.

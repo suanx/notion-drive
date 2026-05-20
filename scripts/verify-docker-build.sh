@@ -13,7 +13,6 @@ echo ""
 echo "📋 检查必要文件..."
 FILES=(
     "backend/Cargo.toml"
-    "backend/Cargo.lock"
     "backend/Dockerfile"
     "frontend/package.json"
     "frontend/package-lock.json"
@@ -28,6 +27,13 @@ for file in "${FILES[@]}"; do
         exit 1
     fi
 done
+
+# Cargo.lock 可选
+if [ -f "backend/Cargo.lock" ]; then
+    echo "  ✅ backend/Cargo.lock (已提交)"
+else
+    echo "  ⚠️  backend/Cargo.lock (未提交，构建时生成)"
+fi
 
 echo ""
 echo "🔨 开始构建..."
