@@ -1,7 +1,9 @@
 # Rust
 /target/
 **/*.rs.bk
-Cargo.lock
+# Cargo.lock is committed for reproducible builds (application binary)
+# Uncomment to ignore Cargo.lock (not recommended for applications):
+# Cargo.lock
 
 # Node.js
 /frontend/node_modules/

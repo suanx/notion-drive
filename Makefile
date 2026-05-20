@@ -1,7 +1,17 @@
-.PHONY: all build run test clean docker-up docker-down
+.PHONY: all build run test clean docker-up docker-down cargo-lock
 
 # 默认目标
 all: build
+
+# 生成 Cargo.lock
+cargo-lock:
+	@echo "🔨 Generating Cargo.lock..."
+	cd backend && cargo generate-lockfile
+	@echo "✅ Cargo.lock generated"
+	@echo ""
+	@echo "💡 Commit with:"
+	@echo "   git add backend/Cargo.lock"
+	@echo "   git commit -m 'chore: add Cargo.lock for reproducible builds'"
 
 # 构建后端
 backend-build:
@@ -64,6 +74,7 @@ lint:
 help:
 	@echo "Notion Drive - Makefile Commands"
 	@echo ""
+	@echo "  make cargo-lock     - Generate Cargo.lock for reproducible builds"
 	@echo "  make build          - Build backend and frontend"
 	@echo "  make backend-build  - Build Rust backend only"
 	@echo "  make frontend-build - Build Next.js frontend only"
