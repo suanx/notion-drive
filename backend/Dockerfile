@@ -20,19 +20,22 @@ FROM rust:1.75-alpine AS backend-builder
 
 WORKDIR /app
 
-# 安装构建依赖
-RUN apk add --no-cache musl-dev pkgconfig openssl-dev
+# 安装构建依赖（包括 PostgreSQL 客户端库和 OpenSSL）
+RUN apk add --no-cache musl-dev pkgconfig openssl-dev postgresql-dev
 
 # 复制 Cargo 配置文件
 COPY backend/Cargo.toml ./
 
-# 复制源代码（在 fetch 之前复制，利用 Docker 缓存）
+# 生成 Cargo.lock（单独步骤，便于缓存）
+RUN cargo generate-lockfile || exit 1
+
+# 复制源代码
 COPY backend/src ./src
 
-# 生成 Cargo.lock 并下载依赖（合并步骤，避免缓存失效）
-RUN cargo generate-lockfile && cargo fetch
+# 下载依赖
+RUN cargo fetch
 
-# 编译（利用缓存层）
+# 编译
 RUN cargo build --release
 
 # ==================== 阶段 3: 运行 ====================

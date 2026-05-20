@@ -13,7 +13,7 @@ tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "trace", "set-header"] }
 
 # Database
-sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "uuid", "chrono", "json", "ipnetwork"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "uuid", "chrono", "json"] }
 
 # Authentication & Security
 jsonwebtoken = "9"
@@ -61,9 +61,6 @@ validator = { version = "0.18", features = ["derive"] }
 
 # Rate limiting
 governor = "0.6"
-
-# IP network
-ipnetwork = "0.20"
 
 # URL encoding
 urlencoding = "2.1"
