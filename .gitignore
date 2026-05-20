@@ -11,7 +11,8 @@
 /frontend/out/
 /frontend/.env.local
 /frontend/.env*.local
-package-lock.json
+# package-lock.json is committed for reproducible builds
+# package-lock.json
 
 # IDE
 /.idea/

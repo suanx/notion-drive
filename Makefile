@@ -1,4 +1,4 @@
-.PHONY: all build run test clean docker-up docker-down cargo-lock
+.PHONY: all build run test clean docker-up docker-down cargo-lock package-lock
 
 # 默认目标
 all: build
@@ -8,10 +8,12 @@ cargo-lock:
 	@echo "🔨 Generating Cargo.lock..."
 	cd backend && cargo generate-lockfile
 	@echo "✅ Cargo.lock generated"
-	@echo ""
-	@echo "💡 Commit with:"
-	@echo "   git add backend/Cargo.lock"
-	@echo "   git commit -m 'chore: add Cargo.lock for reproducible builds'"
+
+# 生成 package-lock.json
+package-lock:
+	@echo "🔨 Generating package-lock.json..."
+	cd frontend && npm install --package-lock-only
+	@echo "✅ package-lock.json generated"
 
 # 构建后端
 backend-build:
@@ -75,6 +77,7 @@ help:
 	@echo "Notion Drive - Makefile Commands"
 	@echo ""
 	@echo "  make cargo-lock     - Generate Cargo.lock for reproducible builds"
+	@echo "  make package-lock   - Generate package-lock.json for reproducible builds"
 	@echo "  make build          - Build backend and frontend"
 	@echo "  make backend-build  - Build Rust backend only"
 	@echo "  make frontend-build - Build Next.js frontend only"
