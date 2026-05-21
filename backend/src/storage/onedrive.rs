@@ -544,12 +544,11 @@ fn sanitize_filename_local(filename: &str) -> String {
         storage_policy_id: Uuid,
         onedrive_file_id: &str,
     ) -> Result<Option<(Uuid, i64)>, StorageError> {
-        let mapping = sqlx::query_as!(
-            (Uuid, i64),
+        let mapping = sqlx::query_as::<(Uuid, i64), _>(
             "SELECT file_id, size FROM onedrive_file_mappings WHERE storage_policy_id = $1 AND onedrive_file_id = $2",
-            storage_policy_id,
-            onedrive_file_id
         )
+        .bind(storage_policy_id)
+        .bind(onedrive_file_id)
         .fetch_optional(&self.pool)
         .await?;
 

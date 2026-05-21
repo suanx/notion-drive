@@ -113,8 +113,7 @@ pub async fn list_files(
     let offset = (page - 1) * page_size;
 
     // 查询文件列表（不包括回收站）
-    let (files, total) = sqlx::query_as!(
-        (Uuid, String, String, i64, Option<String>, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, bool, Option<chrono::DateTime<chrono::Utc>>, i64),
+    let (files, total) = sqlx::query_as::<(Uuid, String, String, i64, Option<String>, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, bool, Option<chrono::DateTime<chrono::Utc>>, i64), _>(
         r#"
             SELECT 
                 f.id, f.name, f.type, f.size, f.mime_type, f.parent_id,
@@ -601,8 +600,7 @@ pub async fn search_files(
     let page_size = query.page_size.unwrap_or(20);
     let offset = (page - 1) * page_size;
 
-    let (files, total) = sqlx::query_as!(
-        (Uuid, String, String, i64, Option<String>, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, bool, Option<chrono::DateTime<chrono::Utc>>, i64),
+    let (files, total) = sqlx::query_as::<(Uuid, String, String, i64, Option<String>, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, bool, Option<chrono::DateTime<chrono::Utc>>, i64), _>(
         r#"
             SELECT 
                 f.id, f.name, f.type, f.size, f.mime_type, f.parent_id,

@@ -290,8 +290,7 @@ pub async fn get_webdav_usage(
 ) -> Result<Json<WebDavUsageResponse>, AppError> {
     let claims = crate::auth::validate_jwt(&auth.token, &state.config.jwt.secret)?;
 
-    let usage = sqlx::query_as!(
-        (i64, i64, i64, i64, i64, Option<chrono::DateTime<chrono::Utc>>),
+    let usage = sqlx::query_as::<(i64, i64, i64, i64, i64, Option<chrono::DateTime<chrono::Utc>>), _>(
         r#"
         SELECT 
             COUNT(*) as total_requests,
@@ -302,9 +301,9 @@ pub async fn get_webdav_usage(
             MAX(created_at) as last_access_at
         FROM webdav_access_logs
         WHERE user_id = $1
-        "#,
-        claims.sub
+        "#
     )
+    .bind(claims.sub)
     .fetch_one(&state.db_pool)
     .await?;
 

@@ -30,6 +30,9 @@ COPY backend/src ./backend/src/
 
 WORKDIR /app/backend
 
+# 禁用 sqlx 编译时查询检查（Docker 构建时无数据库连接）
+ENV SQLX_OFFLINE=true
+
 # 编译（单次构建）
 RUN cargo build --release
 

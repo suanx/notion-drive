@@ -56,7 +56,6 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/arm64
 
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}

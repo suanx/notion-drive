@@ -176,17 +176,16 @@ impl StorageManager {
 
     /// 检查文件是否已存在（秒传）
     pub async fn check_duplicate(&self, hash: &str, size: u64) -> Result<Option<StorageResult>, StorageError> {
-        let existing = sqlx::query_as!(
-            (Uuid, String, i64, String, String),
+        let existing = sqlx::query_as::<(Uuid, String, i64, String, String), _>(
             r#"
                 SELECT fb.id, fb.hash, fb.size, fb.storage_key, sp.driver as storage_type 
                 FROM file_blobs fb
                 JOIN storage_policies sp ON fb.storage_policy_id = sp.id
                 WHERE fb.hash = $1 AND fb.size = $2
-            "#,
-            hash,
-            size as i64
+            "#
         )
+        .bind(hash)
+        .bind(size as i64)
         .fetch_optional(&self.db_pool)
         .await?;
 

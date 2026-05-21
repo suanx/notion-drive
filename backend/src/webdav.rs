@@ -703,16 +703,15 @@ async fn list_resources(
 ) -> Result<Vec<WebDavResource>, AppError> {
     let resources = if path == "/" || path.is_empty() {
         // 根目录：列出用户所有顶层资源
-        sqlx::query_as!(
-            (Uuid, String, String, i64, Option<String>, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>),
+        sqlx::query_as::<(Uuid, String, String, i64, Option<String>, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>), _>(
             r#"
                 SELECT id, name, type, size, mime_type, parent_id, created_at, updated_at
                 FROM files
                 WHERE user_id = $1 AND parent_id IS NULL AND is_deleted = false
                 ORDER BY type DESC, name ASC
-            "#,
-            context.user_id
+            "#
         )
+        .bind(context.user_id)
         .fetch_all(pool)
         .await?
         .into_iter()
