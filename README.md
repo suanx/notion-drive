@@ -106,7 +106,7 @@ notion-drive/
 
 | 工具 | 版本 |
 |------|------|
-| Rust | ≥ 1.85 |
+| Rust | ≥ 1.91 |
 | Node.js | ≥ 20 |
 | Docker | ≥ 24 |
 | PostgreSQL | ≥ 16 |
