@@ -179,9 +179,10 @@ impl StorageManager {
         let existing = sqlx::query_as!(
             (Uuid, String, i64, String, String),
             r#"
-                SELECT id, hash, size, storage_key, storage_type 
-                FROM file_blobs 
-                WHERE hash = $1 AND size = $2
+                SELECT fb.id, fb.hash, fb.size, fb.storage_key, sp.driver as storage_type 
+                FROM file_blobs fb
+                JOIN storage_policies sp ON fb.storage_policy_id = sp.id
+                WHERE fb.hash = $1 AND fb.size = $2
             "#,
             hash,
             size as i64

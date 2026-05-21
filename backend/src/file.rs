@@ -539,7 +539,7 @@ pub async fn download_file(
 
     // 获取文件信息
     let file = sqlx::query!(
-        "SELECT fb.storage_key, fb.size, f.name, f.mime_type FROM files f JOIN file_blobs fb ON f.blob_id = fb.id WHERE f.id = $1 AND f.user_id = $2 AND f.is_deleted = false",
+        "SELECT fb.storage_key, fb.size, f.name, f.mime_type, sp.driver as storage_type FROM files f JOIN file_blobs fb ON f.blob_id = fb.id JOIN storage_policies sp ON fb.storage_policy_id = sp.id WHERE f.id = $1 AND f.user_id = $2 AND f.is_deleted = false",
         file_id,
         claims.sub
     )
@@ -552,7 +552,11 @@ pub async fn download_file(
     };
 
     // 从存储后端下载文件内容
-    let content = state.storage_manager.download_file(&file.storage_key).await?;
+    let content = state.storage_manager.download_file(
+        &file.storage_key, 
+        &file.storage_type, 
+        Some(claims.sub)
+    ).await?;
 
     // 创建响应
     let response = axum::response::Response::builder()
@@ -683,7 +687,7 @@ pub async fn create_offline_download(
 }
 
 pub async fn list_offline_downloads(
-    State(state): State<AppState),
+    State(state): State<AppState>,
     auth: AuthExtractor,
 ) -> Result<Json<Vec<OfflineDownloadTask>>, AppError> {
     let claims = crate::auth::validate_jwt(&auth.token, &state.config.jwt.secret)?;
@@ -700,7 +704,7 @@ pub async fn list_offline_downloads(
 }
 
 pub async fn cancel_offline_download(
-    State(state): State<AppState),
+    State(state): State<AppState>,
     auth: AuthExtractor,
     Path(task_id): Path<Uuid>,
 ) -> Result<StatusCode, AppError> {

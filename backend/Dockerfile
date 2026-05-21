@@ -4,16 +4,16 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# 复制 package 文件
-COPY frontend/package.json frontend/package-lock.json ./
+# 复制 package.json
+COPY frontend/package.json ./
 
-# 使用 npm install（自动处理 lockfile 生成/更新）
+# 生成 package-lock.json 并安装依赖
 RUN npm install
 
-# 复制前端源代码
+# 复制前端源代码（排除 node_modules）
 COPY frontend/. .
 
-# 构建前端（生产模式）
+# 构建前端（生产模式，静态导出）
 ENV NEXT_PUBLIC_API_URL=/api
 RUN npm run build
 
@@ -22,20 +22,21 @@ FROM rust:1.91-alpine AS backend-builder
 
 WORKDIR /app
 
-# 安装构建依赖（包括 PostgreSQL 客户端库、OpenSSL 和 pkg-config）
+# 安装构建依赖（包括 PostgreSQL 客户端库）
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev postgresql-dev
 
 # 复制 Cargo 配置文件
-COPY backend/Cargo.toml ./
+COPY backend/Cargo.toml backend/Cargo.lock* ./
+
+# 创建虚拟 src 以利用 Docker 缓存
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release 2>/dev/null || true
 
 # 复制源代码
 COPY backend/src ./src
 
-# 生成 Cargo.lock 并下载依赖（合并步骤，避免缓存失效）
-# 注意：cargo 会自动生成 Cargo.lock 如果不存在
+# 编译
 RUN cargo build --release
-
-# 编译产物已在 target/release/notion-drive
 
 # ==================== 阶段 3: 运行 ====================
 FROM alpine:3.19
@@ -48,7 +49,7 @@ RUN apk add --no-cache ca-certificates
 # 从构建阶段复制二进制文件
 COPY --from=backend-builder /app/target/release/notion-drive /app/notion-drive
 
-# 从构建阶段复制前端构建产物
+# 从构建阶段复制前端静态文件
 COPY --from=frontend-builder /app/out /app/frontend
 
 # 复制配置文件

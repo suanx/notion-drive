@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-notion_drive}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -26,7 +26,7 @@ services:
   # 后端 + 前端 合并服务
   notion-drive:
     build:
-      context: .
+      context: ..
       dockerfile: backend/Dockerfile
     container_name: notion-drive
     environment:
