@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import FilePreviewModal from '@/components/FilePreviewModal';
 
 // 文件分类类型
-type FileType = 'all' | 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other';
+type FileType = 'all' | 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other' | 'share' | 'recycle';
 
 export default function DashboardPage() {
   const { user, logout, isAuthenticated } = useAuth();
