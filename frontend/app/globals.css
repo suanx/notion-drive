@@ -110,7 +110,7 @@ body {
 
 /* 表格行样式 */
 .table-row {
-  @apply px-4 py-3 flex items-center hover:bg-gray-50 group cursor-pointer;
+  @apply px-4 py-3 flex items-center hover:bg-gray-50 cursor-pointer;
 }
 
 /* 侧边栏链接样式 */
