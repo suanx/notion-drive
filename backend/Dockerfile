@@ -16,7 +16,7 @@ ENV NEXT_PUBLIC_API_URL=/api
 RUN npm run build
 
 # ==================== 阶段 2: 构建后端 ====================
-FROM rust:1.75-alpine AS backend-builder
+FROM rust:1.85-alpine AS backend-builder
 
 WORKDIR /app
 
