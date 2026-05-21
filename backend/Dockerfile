@@ -24,16 +24,13 @@ WORKDIR /app
 # 安装构建依赖（包括 PostgreSQL 客户端库）
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev postgresql-dev
 
-# 复制 Cargo 配置文件
-COPY backend/Cargo.toml backend/Cargo.lock* ./
+# 复制 Cargo 配置和所有源码
+COPY backend/Cargo.toml backend/Cargo.lock* ./backend/
+COPY backend/src ./backend/src/
 
-# 创建虚拟 src 以利用 Docker 缓存
-RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release 2>/dev/null || true
+WORKDIR /app/backend
 
-# 复制源代码
-COPY backend/src ./src
-
-# 编译
+# 编译（单次构建）
 RUN cargo build --release
 
 # ==================== 阶段 3: 运行 ====================
@@ -45,7 +42,7 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates
 
 # 从构建阶段复制二进制文件
-COPY --from=backend-builder /app/target/release/notion-drive /app/notion-drive
+COPY --from=backend-builder /app/backend/target/release/notion-drive /app/notion-drive
 
 # 从构建阶段复制前端静态文件（Next.js 静态导出到 out/ 目录）
 COPY --from=frontend-builder /app/frontend/out /app/frontend
