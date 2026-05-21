@@ -11,7 +11,7 @@
 /frontend/out/
 /frontend/.env.local
 /frontend/.env*.local
-# package-lock.json is committed for reproducible builds
+# package-lock.json is generated during Docker build
 # package-lock.json
 
 # IDE
